@@ -1,13 +1,16 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, scrolledtext
+from tkinter import ttk, filedialog, scrolledtext, messagebox
 import pyaudio
 import threading
 import queue
 import sys
 import time
+import re
 from asr import ASRClient
-from qwen3tts import TTSClient
+from qwen3tts import TTSClient, create_voice
 import os
+import dashscope
+import json
 
 # Configuration
 CHUNK = 3200
@@ -36,6 +39,31 @@ class VoiceChangerGUI:
         self.is_running = False
         self.thread = None
         self.stop_event = threading.Event()
+
+        # Load Config
+        self.config_file = os.path.join(self.get_app_path(), 'config.json')
+        self.config = self.load_config()
+        
+        # Apply API Key from config if exists
+        if 'api_key' in self.config and self.config['api_key']:
+            os.environ['DASHSCOPE_API_KEY'] = self.config['api_key']
+            dashscope.api_key = self.config['api_key']
+
+        # API Key Configuration
+        frame_api = ttk.LabelFrame(root, text="API Key 配置")
+        frame_api.pack(fill="x", padx=10, pady=5)
+        
+        ttk.Label(frame_api, text="DashScope API Key:").pack(side="left", padx=5)
+        self.api_key_var = tk.StringVar()
+        # Try to load existing key from environment or default
+        default_key = os.environ.get('DASHSCOPE_API_KEY', 'sk-16737f3d80e74e678afb7b76e9a361af')
+        self.api_key_var.set(default_key)
+        
+        entry_api = ttk.Entry(frame_api, textvariable=self.api_key_var, width=40)
+        entry_api.pack(side="left", fill="x", expand=True, padx=5, pady=5)
+        
+        btn_save_api = ttk.Button(frame_api, text="保存并更新", command=self.save_api_key)
+        btn_save_api.pack(side="right", padx=5, pady=5)
 
         # Voice File Selection
         frame_voice = ttk.LabelFrame(root, text="声音复刻文件")
@@ -84,6 +112,49 @@ class VoiceChangerGUI:
         sys.stdout = RedirectText(self.log_text)
         sys.stderr = RedirectText(self.log_text)
 
+    def get_app_path(self):
+        if getattr(sys, 'frozen', False):
+            # Running as compiled exe
+            return os.path.dirname(sys.executable)
+        else:
+            # Running as script
+            return os.path.dirname(os.path.abspath(__file__))
+
+    def load_config(self):
+        if os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"读取配置文件失败: {e}")
+        return {}
+
+    def save_config(self):
+        try:
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=4, ensure_ascii=False)
+            print(f"配置已保存到: {self.config_file}")
+        except Exception as e:
+            print(f"保存配置文件失败: {e}")
+
+    def save_api_key(self):
+        new_key = self.api_key_var.get().strip()
+        if not new_key:
+            messagebox.showwarning("警告", "API Key 不能为空！")
+            return
+            
+        print(f"正在更新 API Key 为: {new_key[:6]}******")
+        
+        # 1. Update current process environment
+        os.environ['DASHSCOPE_API_KEY'] = new_key
+        dashscope.api_key = new_key
+        
+        # 2. Update config file
+        self.config['api_key'] = new_key
+        self.save_config()
+            
+        messagebox.showinfo("成功", "API Key 已更新并保存到 config.json！\n无需重启程序即可生效。")
+
     def refresh_devices(self):
         self.input_devices = []
         self.output_devices = []
@@ -111,6 +182,26 @@ class VoiceChangerGUI:
         filename = filedialog.askopenfilename(filetypes=[("音频文件", "*.mp3 *.wav *.m4a")])
         if filename:
             self.voice_path_var.set(filename)
+            self.generate_voice_id(filename)
+
+    def generate_voice_id(self, filename):
+        # Disable start button while generating
+        self.btn_start.config(state="disabled")
+        
+        def task():
+            print(f"正在为 {filename} 生成新音色...")
+            try:
+                # Force refresh because user explicitly changed the file
+                create_voice(filename, force_refresh=True)
+                print(f"音色生成完毕。")
+            except Exception as e:
+                print(f"音色生成失败: {e}")
+            finally:
+                # Re-enable start button
+                if not self.is_running:
+                     self.root.after(0, lambda: self.btn_start.config(state="normal"))
+
+        threading.Thread(target=task).start()
 
     def get_selected_input_index(self):
         idx = self.input_device_combo.current()

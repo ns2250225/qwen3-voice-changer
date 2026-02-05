@@ -1,3 +1,4 @@
 dashscope>=1.23.9
 pyaudio
 requests
+pyinstaller

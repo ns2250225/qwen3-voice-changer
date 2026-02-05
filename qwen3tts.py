@@ -43,12 +43,13 @@ TEXT_TO_SYNTHESIZE = [
 def create_voice(file_path: str,
                  target_model: str = DEFAULT_TARGET_MODEL,
                  preferred_name: str = DEFAULT_PREFERRED_NAME,
-                 audio_mime_type: str = DEFAULT_AUDIO_MIME_TYPE) -> str:
+                 audio_mime_type: str = DEFAULT_AUDIO_MIME_TYPE,
+                 force_refresh: bool = False) -> str:
     """
     创建音色，并返回 voice 参数
     """
     # 检查本地是否有缓存的 voice id
-    if os.path.exists(VOICE_ID_PATH):
+    if not force_refresh and os.path.exists(VOICE_ID_PATH):
         try:
             with open(VOICE_ID_PATH, 'r', encoding='utf-8') as f:
                 voice_id = f.read().strip()
@@ -60,7 +61,7 @@ def create_voice(file_path: str,
 
     # 新加坡地域和北京地域的API Key不同。获取API Key：https://www.alibabacloud.com/help/zh/model-studio/get-api-key
     # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key = "sk-xxx"
-    api_key = "sk-16737f3d80e74e678afb7b76e9a361af"
+    api_key = os.environ.get('DASHSCOPE_API_KEY', "sk-16737f3d80e74e678afb7b76e9a361af")
 
     file_path_obj = pathlib.Path(file_path)
     if not file_path_obj.exists():
@@ -105,7 +106,7 @@ def init_dashscope_api_key():
     """
     # 新加坡地域和北京地域的API Key不同。获取API Key：https://www.alibabacloud.com/help/zh/model-studio/get-api-key
     # 若没有配置环境变量，请用百炼API Key将下行替换为：dashscope.api_key = "sk-xxx"
-    dashscope.api_key = "sk-16737f3d80e74e678afb7b76e9a361af"
+    dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY', "sk-16737f3d80e74e678afb7b76e9a361af")
 
 # ======= 回调类 =======
 class MyCallback(QwenTtsRealtimeCallback):
