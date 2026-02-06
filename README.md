@@ -47,7 +47,7 @@ $env:DASHSCOPE_API_KEY = "your-api-key"
 export DASHSCOPE_API_KEY="your-api-key"
 ```
 
-*注意：代码中目前包含一个占位符 Key。如果不使用环境变量，请在 `asr.py` 和 `qwen3tts.py` 中将其替换为您自己的有效 Key。*
+*注意：请务必配置环境变量，否则程序无法正常运行。*
 
 ## 使用方法
 

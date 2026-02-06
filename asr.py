@@ -26,9 +26,9 @@ def init_api_key():
     """初始化 API Key"""
     # 新加坡和北京地域的API Key不同。获取API Key：https://help.aliyun.com/zh/model-studio/get-api-key
     # 若没有配置环境变量，请用百炼API Key将下行替换为：dashscope.api_key = "sk-xxx"
-    dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY', 'sk-16737f3d80e74e678afb7b76e9a361af')
-    if dashscope.api_key == 'sk-16737f3d80e74e678afb7b76e9a361af':
-        print('[Warning] Using placeholder API key, set DASHSCOPE_API_KEY environment variable.')
+    dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY')
+    if not dashscope.api_key:
+        print('[Warning] DASHSCOPE_API_KEY is not set. Please set it in environment variables or config.')
 
 
 class MyCallback(OmniRealtimeCallback):

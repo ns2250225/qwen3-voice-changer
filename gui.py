@@ -56,7 +56,7 @@ class VoiceChangerGUI:
         ttk.Label(frame_api, text="DashScope API Key:").pack(side="left", padx=5)
         self.api_key_var = tk.StringVar()
         # Try to load existing key from environment or default
-        default_key = os.environ.get('DASHSCOPE_API_KEY', 'sk-16737f3d80e74e678afb7b76e9a361af')
+        default_key = os.environ.get('DASHSCOPE_API_KEY', '')
         self.api_key_var.set(default_key)
         
         entry_api = ttk.Entry(frame_api, textvariable=self.api_key_var, width=40)

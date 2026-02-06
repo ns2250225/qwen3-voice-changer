@@ -61,7 +61,9 @@ def create_voice(file_path: str,
 
     # 新加坡地域和北京地域的API Key不同。获取API Key：https://www.alibabacloud.com/help/zh/model-studio/get-api-key
     # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key = "sk-xxx"
-    api_key = os.environ.get('DASHSCOPE_API_KEY', "sk-16737f3d80e74e678afb7b76e9a361af")
+    api_key = os.environ.get('DASHSCOPE_API_KEY', "")
+    if not api_key:
+        raise ValueError("[Error] DASHSCOPE_API_KEY 未配置，请设置环境变量或在代码中配置。")
 
     file_path_obj = pathlib.Path(file_path)
     if not file_path_obj.exists():
@@ -106,7 +108,9 @@ def init_dashscope_api_key():
     """
     # 新加坡地域和北京地域的API Key不同。获取API Key：https://www.alibabacloud.com/help/zh/model-studio/get-api-key
     # 若没有配置环境变量，请用百炼API Key将下行替换为：dashscope.api_key = "sk-xxx"
-    dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY', "sk-16737f3d80e74e678afb7b76e9a361af")
+    dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY')
+    if not dashscope.api_key:
+        print('[Warning] DASHSCOPE_API_KEY is not set. Please set it in environment variables or config.')
 
 # ======= 回调类 =======
 class MyCallback(QwenTtsRealtimeCallback):
